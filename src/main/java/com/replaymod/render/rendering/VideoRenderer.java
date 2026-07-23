@@ -321,12 +321,16 @@ public class VideoRenderer implements RenderInfo {
         //$$     Display.setResizable(false);
         //$$ }
         //#endif
-        if (mc.options.debugEnabled) {
+        //#if MC>=12002
+        if (mc.getDebugHud().shouldShowDebugHud()) {
+        //#else
+        //$$ if (mc.options.debugEnabled) {
+        //#endif
             debugInfoWasShown = true;
             //#if MC>=12002
-            //$$ mc.getDebugHud().toggleDebugHud();
+            mc.getDebugHud().toggleDebugHud();
             //#else
-            mc.options.debugEnabled = false;
+            //$$ mc.options.debugEnabled = false;
             //#endif
         }
         //#if MC>=11400
@@ -393,9 +397,9 @@ public class VideoRenderer implements RenderInfo {
         //#endif
         if (debugInfoWasShown) {
             //#if MC>=12002
-            //$$ mc.getDebugHud().toggleDebugHud();
+            mc.getDebugHud().toggleDebugHud();
             //#else
-            mc.options.debugEnabled = true;
+            //$$ mc.options.debugEnabled = true;
             //#endif
         }
         if (mouseWasGrabbed) {

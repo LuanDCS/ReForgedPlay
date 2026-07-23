@@ -12,7 +12,7 @@ import com.replaymod.recording.packet.PacketListener;
 import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 import net.minecraft.network.ClientConnection;
-import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.ChannelBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -78,7 +78,8 @@ public class ReplayModRecording implements Module {
         //#endif
         //#else
         //#if MC>=11400
-        NetworkRegistry.newEventChannel(Restrictions.PLUGIN_CHANNEL, () -> "0", s -> true, s -> true);
+        // Forge 48+: NetworkRegistry.newEventChannel is gone, ChannelBuilder is the new API
+        ChannelBuilder.named(Restrictions.PLUGIN_CHANNEL).optional().eventNetworkChannel();
         //#else
         //$$ NetworkRegistry.INSTANCE.newChannel(Restrictions.PLUGIN_CHANNEL, new RestrictionsChannelHandler());
         //#endif

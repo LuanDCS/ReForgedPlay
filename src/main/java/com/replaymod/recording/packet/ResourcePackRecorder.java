@@ -34,9 +34,9 @@ import de.johni0702.minecraft.gui.utils.Consumer;
 //#endif
 
 //#if MC>=10800
-import net.minecraft.network.packet.c2s.play.ResourcePackStatusC2SPacket;
-import net.minecraft.network.packet.c2s.play.ResourcePackStatusC2SPacket.Status;
-import net.minecraft.network.packet.s2c.play.ResourcePackSendS2CPacket;
+import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket;
+import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket.Status;
+import net.minecraft.network.packet.s2c.common.ResourcePackSendS2CPacket;
 //#endif
 
 //#if MC>=10800
@@ -140,8 +140,8 @@ public class ResourcePackRecorder {
 
     public synchronized ResourcePackSendS2CPacket handleResourcePack(ClientConnection netManager, ResourcePackSendS2CPacket packet) {
         final int requestId = nextRequestId++;
-        final String url = packet.getURL();
-        final String hash = packet.getSHA1();
+        final String url = packet.getUrl();
+        final String hash = packet.getHash();
 
         if (url.startsWith("level://")) {
             String levelName = url.substring("level://".length());

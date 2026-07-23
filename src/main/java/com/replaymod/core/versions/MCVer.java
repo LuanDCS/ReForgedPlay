@@ -110,7 +110,7 @@ public class MCVer {
             case STATUS: return NetworkState.STATUS;
             case LOGIN: return NetworkState.LOGIN;
             //#if MC>=12002
-            //$$ case CONFIGURATION: return NetworkState.CONFIGURATION;
+            case CONFIGURATION: return NetworkState.CONFIGURATION;
             //#endif
             case PLAY: return NetworkState.PLAY;
         }
@@ -123,7 +123,7 @@ public class MCVer {
             case STATUS: return State.STATUS;
             case LOGIN: return State.LOGIN;
             //#if MC>=12002
-            //$$ case CONFIGURATION: return State.CONFIGURATION;
+            case CONFIGURATION: return State.CONFIGURATION;
             //#endif
             case PLAY: return State.PLAY;
         }

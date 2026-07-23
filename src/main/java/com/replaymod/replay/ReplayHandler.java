@@ -48,10 +48,10 @@ import java.util.*;
 //#endif
 
 //#if MC>=12002
-//$$ import io.netty.channel.ChannelDuplexHandler;
-//$$ import io.netty.channel.ChannelPromise;
-//$$ import net.minecraft.network.handler.NetworkStateTransitionHandler;
-//$$ import net.minecraft.network.packet.Packet;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelPromise;
+import net.minecraft.network.handler.NetworkStateTransitionHandler;
+import net.minecraft.network.packet.Packet;
 //#endif
 
 //#if MC>=12000
@@ -60,12 +60,12 @@ import net.minecraft.client.gui.DrawContext;
 //#endif
 
 //#if MC>=11904
-import net.minecraft.network.PacketBundler;
+import net.minecraft.network.handler.PacketBundler;
 //#endif
 
 //#if MC>=11700
 import net.minecraft.client.render.DiffuseLighting;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.NetworkContext;
 import org.joml.Matrix4f;
 //#endif
 
@@ -327,23 +327,25 @@ public class ReplayHandler {
         //#endif
         channel.pipeline().addLast("ReplayModReplay_replaySender", fullReplaySender);
         //#if MC>=12002
-        //$$ channel.pipeline().addLast("ReplayModReplay_transition", new DummyNetworkStateTransitionHandler());
-        //$$ channel.pipeline().addLast("bundler", new PacketBundler(ClientConnection.CLIENTBOUND_PROTOCOL_KEY));
+        channel.pipeline().addLast("ReplayModReplay_transition", new DummyNetworkStateTransitionHandler());
+        channel.pipeline().addLast("bundler", new PacketBundler(ClientConnection.CLIENTBOUND_PROTOCOL_KEY));
         //#elseif MC>=11904
-        channel.pipeline().addLast("bundler", new PacketBundler(NetworkSide.CLIENTBOUND));
+        //$$ channel.pipeline().addLast("bundler", new PacketBundler(NetworkSide.CLIENTBOUND));
         //#endif
         channel.pipeline().addLast("packet_handler", networkManager);
         channel.pipeline().fireChannelActive();
 
-        NetworkHooks.registerClientLoginChannel(networkManager);
+        // Forge 48+: NetworkHooks.registerClientLoginChannel is gone; NetworkContext.get
+        // lazily attaches the (vanilla-type) network context to our fake connection instead.
+        NetworkContext.get(networkManager);
 
         // MC usually transitions from handshake to login via the packets it sends.
         // We don't send any packets (there is no server to receive them), so we need to switch manually.
         //#if MC>=12002
-        //$$ channel.attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY).set(NetworkState.LOGIN.getHandler(NetworkSide.CLIENTBOUND));
-        //$$ channel.attr(ClientConnection.SERVERBOUND_PROTOCOL_KEY).set(NetworkState.LOGIN.getHandler(NetworkSide.SERVERBOUND));
+        channel.attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY).set(NetworkState.LOGIN.getHandler(NetworkSide.CLIENTBOUND));
+        channel.attr(ClientConnection.SERVERBOUND_PROTOCOL_KEY).set(NetworkState.LOGIN.getHandler(NetworkSide.SERVERBOUND));
         //#else
-        networkManager.setState(NetworkState.LOGIN);
+        //$$ networkManager.setState(NetworkState.LOGIN);
         //#endif
 
         networkManager.setPacketListener(new ClientLoginNetworkHandler(
@@ -809,23 +811,23 @@ public class ReplayHandler {
     }
 
     //#if MC>=12002
-    //$$ private static class DummyNetworkStateTransitionHandler extends ChannelDuplexHandler {
-    //$$     @Override
-    //$$     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    //$$         if (msg instanceof Packet<?> packet) {
-    //$$             NetworkStateTransitionHandler.handle(ctx.channel().attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY), packet);
-    //$$         }
-    //$$         super.channelRead(ctx, msg);
-    //$$
-    //$$ }
+    private static class DummyNetworkStateTransitionHandler extends ChannelDuplexHandler {
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            if (msg instanceof Packet<?> packet) {
+                NetworkStateTransitionHandler.handle(ctx.channel().attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY), packet);
+            }
+            super.channelRead(ctx, msg);
+    
+    }
 
-    //$$     @Override
-    //$$     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-    //$$         if (msg instanceof Packet<?> packet) {
-    //$$             NetworkStateTransitionHandler.handle(ctx.channel().attr(ClientConnection.SERVERBOUND_PROTOCOL_KEY), packet);
-    //$$         }
-    //$$         super.write(ctx, msg, promise);
-    //$$     }
-    //$$ }
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+            if (msg instanceof Packet<?> packet) {
+                NetworkStateTransitionHandler.handle(ctx.channel().attr(ClientConnection.SERVERBOUND_PROTOCOL_KEY), packet);
+            }
+            super.write(ctx, msg, promise);
+        }
+    }
     //#endif
 }

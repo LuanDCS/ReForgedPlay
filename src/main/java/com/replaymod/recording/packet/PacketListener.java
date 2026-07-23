@@ -28,8 +28,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.AttributeKey;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket;
-import net.minecraft.network.packet.s2c.play.DisconnectS2CPacket;
+import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
+import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.NetworkState;
 import net.minecraft.network.PacketByteBuf;
@@ -42,10 +42,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 //#if MC>=12002
-//$$ import net.minecraft.entity.EntityType;
-//$$ import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
+import net.minecraft.entity.EntityType;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 //#else
-import net.minecraft.network.packet.s2c.play.PlayerSpawnS2CPacket;
+//$$ import net.minecraft.network.packet.s2c.play.PlayerSpawnS2CPacket;
 //#endif
 
 //#if MC>=10800
@@ -53,7 +53,7 @@ import net.minecraft.network.packet.s2c.play.PlayerSpawnS2CPacket;
 //$$ import net.minecraft.network.play.server.S46PacketSetCompressionLevel;
 //#endif
 import net.minecraft.network.packet.s2c.login.LoginCompressionS2CPacket;
-import net.minecraft.network.packet.s2c.play.ResourcePackSendS2CPacket;
+import net.minecraft.network.packet.s2c.common.ResourcePackSendS2CPacket;
 import net.minecraft.network.NetworkSide;
 //#endif
 
@@ -77,7 +77,7 @@ import static com.replaymod.replaystudio.util.Utils.writeInt;
 import static java.util.Objects.requireNonNull;
 
 //#if MC>=11904
-import net.minecraft.network.PacketBundleHandler;
+import net.minecraft.network.handler.PacketBundleHandler;
 import java.util.ArrayList;
 //#endif
 
@@ -104,7 +104,7 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
             ;
     private static final int PACKET_ID_RESOURCE_PACK_SEND = getPacketId(NetworkState.PLAY, RESOURCE_PACK_SEND_PACKET);
     //#if MC>=12002
-    //$$ private static final int PACKET_ID_CONFIG_RESOURCE_PACK_SEND = getPacketId(NetworkState.CONFIGURATION, RESOURCE_PACK_SEND_PACKET);
+    private static final int PACKET_ID_CONFIG_RESOURCE_PACK_SEND = getPacketId(NetworkState.CONFIGURATION, RESOURCE_PACK_SEND_PACKET);
     //#endif
     //#if MC>=11700
     private static final int PACKET_ID_LOGIN_COMPRESSION = getPacketId(NetworkState.LOGIN, new LoginCompressionS2CPacket(0));
@@ -366,9 +366,9 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
             // ourselves to be able to store them
             //#if MC>=11904
             //#if MC>=12002
-            //$$ PacketBundleHandler bundleHandler = ctx.channel().attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY).get().getBundler();
+            PacketBundleHandler bundleHandler = ctx.channel().attr(ClientConnection.CLIENTBOUND_PROTOCOL_KEY).get().getBundler();
             //#else
-            PacketBundleHandler bundleHandler = ctx.channel().attr(PacketBundleHandler.KEY).get().getBundler(NetworkSide.CLIENTBOUND);
+            //$$ PacketBundleHandler bundleHandler = ctx.channel().attr(PacketBundleHandler.KEY).get().getBundler(NetworkSide.CLIENTBOUND);
             //#endif
             List<Packet> packets = new ArrayList<>(1);
             bundleHandler.forEachPacket((net.minecraft.network.packet.Packet<?>) msg, unbundledPacket -> {
@@ -392,7 +392,7 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
         if (packet != null) {
             if (connectionState == NetworkState.PLAY && packet.getId() == PACKET_ID_RESOURCE_PACK_SEND
                     //#if MC>=12002
-                    //$$ || connectionState == NetworkState.CONFIGURATION && packet.getId() == PACKET_ID_CONFIG_RESOURCE_PACK_SEND
+                    || connectionState == NetworkState.CONFIGURATION && packet.getId() == PACKET_ID_CONFIG_RESOURCE_PACK_SEND
                     //#endif
             ) {
                 ClientConnection connection = ctx.pipeline().get(ClientConnection.class);
@@ -415,17 +415,17 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
             return NetworkState.LOGIN;
         }
         //#if MC>=12002
-        //$$ AttributeKey<NetworkState.PacketHandler<?>> key = ClientConnection.CLIENTBOUND_PROTOCOL_KEY;
-        //$$ return ctx.channel().attr(key).get().getState();
+        AttributeKey<NetworkState.PacketHandler<?>> key = ClientConnection.CLIENTBOUND_PROTOCOL_KEY;
+        return ctx.channel().attr(key).get().getState();
         //#else
-        AttributeKey<NetworkState> key = ClientConnection.PROTOCOL_ATTRIBUTE_KEY;
-        return ctx.channel().attr(key).get();
+        //$$ AttributeKey<NetworkState> key = ClientConnection.PROTOCOL_ATTRIBUTE_KEY;
+        //$$ return ctx.channel().attr(key).get();
         //#endif
     }
 
     private static Packet encodeMcPacket(NetworkState connectionState, net.minecraft.network.packet.Packet packet) throws Exception {
         //#if MC>=10800
-        Integer packetId = connectionState.getPacketId(NetworkSide.CLIENTBOUND, packet);
+        Integer packetId = connectionState.getHandler(NetworkSide.CLIENTBOUND).getId(packet);
         //#else
         //$$ Integer packetId = (Integer) connectionState.func_150755_b().inverse().get(packet.getClass());
         //#endif
@@ -455,9 +455,9 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
         PacketByteBuf packetBuf = new PacketByteBuf(Unpooled.wrappedBuffer(packet.getBuf().nioBuffer()));
 
         //#if MC>=12002
-        //$$ return connectionState.getHandler(NetworkSide.CLIENTBOUND).createPacket(packetId, packetBuf);
+        return connectionState.getHandler(NetworkSide.CLIENTBOUND).createPacket(packetId, packetBuf);
         //#elseif MC>=11700
-        return connectionState.getPacketHandler(NetworkSide.CLIENTBOUND, packetId, packetBuf);
+        //$$ return connectionState.getPacketHandler(NetworkSide.CLIENTBOUND, packetId, packetBuf);
         //#else
         //#if MC>=10800
         //$$ net.minecraft.network.Packet p = connectionState.getPacketHandler(NetworkSide.CLIENTBOUND, packetId);
@@ -483,7 +483,7 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
 
     private static int getPacketId(NetworkState networkState, net.minecraft.network.packet.Packet packet) {
         try {
-            return requireNonNull(networkState.getPacketId(NetworkSide.CLIENTBOUND, packet));
+            return requireNonNull(networkState.getHandler(NetworkSide.CLIENTBOUND).getId(packet));
         } catch (Exception e) {
             throw new RuntimeException("Failed to determine packet id for " + packet.getClass(), e);
         }
@@ -538,18 +538,18 @@ public class PacketListener extends ChannelInboundHandlerAdapter {
 
             if (msg instanceof CustomPayloadS2CPacket) {
                 CustomPayloadS2CPacket packet = (CustomPayloadS2CPacket) msg;
-                if (Restrictions.PLUGIN_CHANNEL.equals(packet.getChannel())) {
+                if (Restrictions.PLUGIN_CHANNEL.equals(packet.payload().id())) {
                     save(new DisconnectS2CPacket(net.minecraft.text.Text.literal("Please update to view this replay.")));
                 }
             }
 
             //#if MC>=12002
-            //$$ if (msg instanceof EntitySpawnS2CPacket packet && packet.getEntityType() == EntityType.PLAYER) {
-            //$$     UUID uuid = packet.getUuid();
+            if (msg instanceof EntitySpawnS2CPacket packet && packet.getEntityType() == EntityType.PLAYER) {
+                UUID uuid = packet.getUuid();
             //#else
-            if (msg instanceof PlayerSpawnS2CPacket) {
+            //$$ if (msg instanceof PlayerSpawnS2CPacket) {
                 //#if MC>=10800
-                UUID uuid = ((PlayerSpawnS2CPacket) msg).getPlayerUuid();
+                //$$ UUID uuid = ((PlayerSpawnS2CPacket) msg).getPlayerUuid();
                 //#else
                 //$$ UUID uuid = ((S0CPacketSpawnPlayer) msg).func_148948_e().getId();
                 //#endif
