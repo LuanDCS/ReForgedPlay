@@ -65,7 +65,7 @@ import net.minecraft.network.handler.PacketBundler;
 
 //#if MC>=11700
 import net.minecraft.client.render.DiffuseLighting;
-import net.minecraftforge.network.NetworkContext;
+import net.minecraftforge.network.NetworkRegistry;
 import org.joml.Matrix4f;
 //#endif
 
@@ -335,9 +335,14 @@ public class ReplayHandler {
         channel.pipeline().addLast("packet_handler", networkManager);
         channel.pipeline().fireChannelActive();
 
-        // Forge 48+: NetworkHooks.registerClientLoginChannel is gone; NetworkContext.get
-        // lazily attaches the (vanilla-type) network context to our fake connection instead.
-        NetworkContext.get(networkManager);
+        // Forge 48+: initialize the fake connection like a real one. This installs each
+        // channel's per-connection attributes, most importantly the ForgePacketHandler that
+        // processes the recorded forge:handshake configuration payloads. Without it the
+        // registry snapshot from the recording is never applied, so modded item/block ids
+        // in the replay resolve against the client's default registries (wrong items, e.g.
+        // wrong armor being displayed). Reverting is handled by the usual client path:
+        // closing the replay world triggers GameData.revertToFrozen().
+        NetworkRegistry.onConnectionStart(networkManager);
 
         // MC usually transitions from handshake to login via the packets it sends.
         // We don't send any packets (there is no server to receive them), so we need to switch manually.
