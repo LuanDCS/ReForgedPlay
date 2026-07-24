@@ -54,6 +54,16 @@ public class EntityRendererHandler extends EventRegistrations implements WorldRe
         on(PreRenderHandCallback.EVENT, () -> omnidirectional);
 
         ((IEntityRenderer) mc.gameRenderer).replayModRender_setHandler(this);
+        // Post-processing effects loaded into the GameRenderer (e.g. DragonMineZ'
+        // transformation outline shader) are sized for the window framebuffer and flush
+        // their intermediate buffers against it mid-frame, corrupting video frames that
+        // are rendered at a different resolution into our own framebuffers. Kill any
+        // active effect for the duration of the render; mods re-load theirs on the next
+        // client tick afterwards. Mixin_NoPostEffectsDuringRender blocks re-loading
+        // while this handler is installed.
+        //#if MC>=11400
+        mc.gameRenderer.disablePostProcessor();
+        //#endif
         register();
     }
 

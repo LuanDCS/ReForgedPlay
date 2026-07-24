@@ -22,6 +22,7 @@
     "Mixin_PreserveDepthDuringGuiRendering",
     "Mixin_PreserveDepthDuringHandRendering",
     "Mixin_SkipBlockOutlinesDuringRender",
+    "Mixin_NoPostEffectsDuringRender",
     "Mixin_SkipHudDuringRender",
     "Mixin_StabilizeCamera",
     "Mixin_Stereoscopic_Camera",
