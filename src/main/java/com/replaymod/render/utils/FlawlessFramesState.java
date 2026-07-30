@@ -17,6 +17,8 @@ import java.util.function.Consumer;
 public class FlawlessFramesState {
     private static final List<Consumer<Boolean>> CONSUMERS = new CopyOnWriteArrayList<>();
     private static boolean hasSodium;
+    /** Ligado durante o render de vídeo — lido pelo Mixin_EmbeddiumFlawlessFrames (backport 0.2.x). */
+    private static volatile boolean enabled;
 
     public static void addConsumer(Consumer<Boolean> consumer, String providerClassName) {
         CONSUMERS.add(consumer);
@@ -26,8 +28,13 @@ public class FlawlessFramesState {
         }
     }
 
-    public static void setEnabled(boolean enabled) {
-        CONSUMERS.forEach(it -> it.accept(enabled));
+    public static void setEnabled(boolean newState) {
+        enabled = newState;
+        CONSUMERS.forEach(it -> it.accept(newState));
+    }
+
+    public static boolean isEnabled() {
+        return enabled;
     }
 
     public static boolean hasSodium() {

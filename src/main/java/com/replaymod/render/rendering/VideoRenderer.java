@@ -672,10 +672,10 @@ public class VideoRenderer implements RenderInfo {
     public static String[] checkCompat(RenderSettings settings) {
         //#if FABRIC>=1
         if (LoadingModList.get().getModFileById("embeddium") != null && !FlawlessFramesHelper.hasEmbeddium()) {
-            // Embeddium 0.2.x (o unico da 1.20.2) nao tem a Flawless Frames API do 0.3+.
-            // Renderizar ainda funciona pelo fallback de força-chunks vanilla; em paths muito
-            // rapidos alguns chunks podem aparecer carregando — melhor que bloquear o render.
-            LOGGER.warn("Embeddium sem Flawless Frames API (0.2.x) — renderizando com o fallback vanilla de chunk loading.");
+            // Embeddium 0.2.x (o unico da 1.20.2) nao tem a Flawless Frames API do 0.3+, mas o
+            // Mixin_EmbeddiumFlawlessFrames backporta o comportamento forcando updateChunksImmediately
+            // no setupTerrain durante o render.
+            LOGGER.info("Embeddium 0.2.x detectado — usando o backport interno de Flawless Frames.");
         }
 //        //#if MC>=11700
 //        if (settings.getRenderMethod() == RenderSettings.RenderMethod.ODS
