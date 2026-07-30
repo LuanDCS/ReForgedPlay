@@ -102,19 +102,24 @@ public class GuiPathing {
     public final GuiButton renderButton = new GuiButton().onClick(new Runnable() {
         @Override
         public void run() {
-            abortPathPlayback();
-            GuiScreen screen = GuiRenderSettings.createBaseScreen();
-            new GuiRenderQueue(screen, replayHandler, () -> preparePathsForPlayback(false)) {
-                @Override
-                protected void close() {
-                    super.close();
-                    getMinecraft().setScreen(null);
-                }
-            }.open();
-            screen.display();
+            openRenderQueueScreen();
         }
     }).setSize(20, 20).setTexture(ReplayMod.TEXTURE, ReplayMod.TEXTURE_SIZE).setSpriteUV(40, 0)
             .setTooltip(new GuiTooltip().setI18nText("replaymod.gui.ingame.menu.renderpath"));
+
+    /** Mesmo fluxo do renderButton, acionável por hotkey (a fila de render é uma tela normal). */
+    public void openRenderQueueScreen() {
+        abortPathPlayback();
+        GuiScreen screen = GuiRenderSettings.createBaseScreen();
+        new GuiRenderQueue(screen, replayHandler, () -> preparePathsForPlayback(false)) {
+            @Override
+            protected void close() {
+                super.close();
+                getMinecraft().setScreen(null);
+            }
+        }.open();
+        screen.display();
+    }
 
     public final GuiButton positionKeyframeButton = new GuiButton() {
         @Override

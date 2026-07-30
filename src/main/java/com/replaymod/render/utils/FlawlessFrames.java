@@ -2,8 +2,6 @@ package com.replaymod.render.utils;
 
 import org.embeddedt.embeddium.api.service.FlawlessFramesService;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -16,27 +14,25 @@ import static com.replaymod.core.ReplayMod.MOD_ID;
  * In particular also to force-load all chunks with Canvas/Sodium/Bobby.
  *
  * See https://github.com/grondag/frex/pull/9
+ *
+ * <p>NUNCA toque nesta classe fora do ServiceLoader do Embeddium 0.3+: ela referencia a interface
+ * {@code FlawlessFramesService}, que nao existe no Embeddium 0.2.x — todo o estado fica em
+ * {@link FlawlessFramesState}, que e seguro em qualquer versao.</p>
  */
 public class FlawlessFrames implements FlawlessFramesService {
-    private static final List<Consumer<Boolean>> CONSUMERS = new CopyOnWriteArrayList<>();
-    private static boolean hasSodium;
 
     public FlawlessFrames() {}
 
     public void acceptController(Function<String, Consumer<Boolean>> provider) {
         Consumer<Boolean> consumer = provider.apply(MOD_ID);
-        CONSUMERS.add(consumer);
-
-        if (provider.getClass().getName().contains(".embeddium.") || consumer.getClass().getName().contains(".embeddium.")) {
-            hasSodium = true;
-        }
+        FlawlessFramesState.addConsumer(consumer, provider.getClass().getName());
     }
 
     public static void setEnabled(boolean enabled) {
-        CONSUMERS.forEach(it -> it.accept(enabled));
+        FlawlessFramesState.setEnabled(enabled);
     }
 
     public static boolean hasSodium() {
-        return hasSodium;
+        return FlawlessFramesState.hasSodium();
     }
 }

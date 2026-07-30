@@ -57,7 +57,11 @@ public abstract class Mixin_ForceChunkLoading implements IForceChunkLoading {
         if (replayModRender_hook == null) {
             return;
         }
-        if (LoadingModList.get().getModFileById("embeddium") != null && FlawlessFramesHelper.hasEmbeddium()) {
+        if (LoadingModList.get().getModFileById("embeddium") != null) {
+            // Com Embeddium instalado o loop vanilla abaixo TRAVA o render (o terreno não é
+            // renderizado pelo SectionRenderDispatcher vanilla, então a condição de término
+            // nunca fecha). Com Flawless Frames (0.3+) o próprio Embeddium força os chunks;
+            // sem (0.2.x da 1.20.2), renderizamos sem forçar — risco só de pop-in em paths rápidos.
             return;
         }
 
