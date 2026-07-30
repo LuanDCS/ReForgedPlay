@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import static com.replaymod.core.versions.MCVer.getMinecraft;
 
 @Pseudo
-@Mixin(targets = "net.coderbot.iris.pipeline.HandRenderer", remap = false)
+// Oculus 1.7+/1.20.2 moved the class from net.coderbot.iris.pipeline to net.irisshaders.iris.pathways.
+@Mixin(targets = "net.irisshaders.iris.pathways.HandRenderer", remap = false)
 public abstract class Mixin_ShowSpectatedHand_Iris {
     @Redirect(
             method = "*",
